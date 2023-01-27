@@ -2,23 +2,38 @@ package com.example.kevin;
 
 import static com.example.kevin.BuildConfig.MAPS_API_KEY;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothProfile;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.io.BufferedReader;
@@ -64,7 +79,9 @@ public class Act2 extends AppCompatActivity {
             }
         }
     };
-
+    int PERMISSION_ID = 44;
+    String origin_Coords = "29.6465, -82.3479";
+    FusedLocationProviderClient FLocationClient;
 
 
     @Override
@@ -85,6 +102,13 @@ public class Act2 extends AppCompatActivity {
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         BluetoothDevice device = bluetoothAdapter.getRemoteDevice(dev_addr);
         BluetoothGatt ble_gatt = device.connectGatt(Act2.this, false, bluetoothGattCallback, BluetoothDevice.TRANSPORT_LE);
+
+
+        FLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+
+        String origin = getUserLocation();
+
 
         et_Phone = (EditText) findViewById(R.id.et_Phone);
         btn_Phone = (Button) findViewById(R.id.btn_Phone);
@@ -107,7 +131,12 @@ public class Act2 extends AppCompatActivity {
 
         btn_goMaps.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
-                getResponse(v);
+                // get current userlocation from which to show directions
+
+
+                String dest = et_Dest.getText().toString();
+                String response = getResponse(v, origin_Coords, dest);
+                Log.d("connect", response);
             }
         });
 
@@ -122,15 +151,16 @@ public class Act2 extends AppCompatActivity {
         return number.getBytes(StandardCharsets.UTF_8);
     }
 
-    public void getResponse(View view){
-        String starting = "Reitz";
-        String destination = "SWRC";
+    public String getResponse(View view, String origin, String dest){
+        String starting = origin;
+        String destination = dest;
         String requestStart = "https://maps.googleapis.com/maps/api/directions/json?origin=";
         String requestMid = "&destination=";
         String requestEnd = "&key=";
         String request = requestStart + starting + requestMid + destination + requestEnd + MAPS_API_KEY;
 
         //Snackbar.make(view, request, Snackbar.LENGTH_LONG).show();
+        String response = "";
         URL url;
         HttpURLConnection urlConnection = null;
 
@@ -155,7 +185,7 @@ public class Act2 extends AppCompatActivity {
             String inpLine;
 
             while ((inpLine = in.readLine()) != null) {
-                Log.d("ME", inpLine);
+                response += "\n" +inpLine;
             }
             in.close();
 
@@ -164,8 +194,83 @@ public class Act2 extends AppCompatActivity {
         } finally {
             if(urlConnection != null) urlConnection.disconnect();
         }
-
+        return response;
     }
+
+
+    // Following methods use
+    // https://geeksforgeeks.org/how-to-get-user-location-in-android
+    // as a source for permission checking help.
+
+    public boolean checkPermissions(){
+        boolean cl = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean fl = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        return cl && fl;
+    }
+
+    public void requestPermissions(){
+        ActivityCompat.requestPermissions(this, new String[]{
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_ID);
+    }
+
+    public boolean isLocationEnabled(){
+        LocationManager locMan = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        return locMan.isProviderEnabled(LocationManager.GPS_PROVIDER) || locMan.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+    }
+
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults){
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if(requestCode == PERMISSION_ID){
+            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                getUserLocation();
+            }
+        }
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        if(checkPermissions()){
+            getUserLocation();
+        }
+    }
+
+
+    @SuppressLint("MissingPermission")
+    public String getUserLocation(){
+
+
+        if(checkPermissions()){
+            if(isLocationEnabled()){
+                FLocationClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Location> task) {
+                        Location loc = task.getResult();
+                        if(loc != null){
+                            origin_Coords = "";
+                            origin_Coords += loc.getLatitude();
+                            origin_Coords += ", " + loc.getLongitude();
+                        } else {
+                            Log.d("location","null location");
+                        }
+                    }
+                });
+            } else {
+                Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                startActivity(intent);
+            }
+        } else {
+            requestPermissions();
+        }
+
+        return origin_Coords;
+    }
+
 
 
 
