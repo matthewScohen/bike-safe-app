@@ -1,6 +1,9 @@
 package com.example.kevin;
 
+import static com.example.kevin.BuildConfig.MAPS_API_KEY;
+
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -10,18 +13,29 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothProfile;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.google.android.material.snackbar.Snackbar;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+
 
 public class Act2 extends AppCompatActivity {
 
     EditText et_Phone;
     Button btn_Phone;
+    EditText et_Dest;
+    Button btn_goMaps;
     private BluetoothGatt ble_gatt = null;
     private final BluetoothGattCallback bluetoothGattCallback = new BluetoothGattCallback() {
         @Override
@@ -33,12 +47,19 @@ public class Act2 extends AppCompatActivity {
                     gatt.discoverServices();
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                     // We successfully disconnected on our own request
+
+
+                    // Probably should change back to connection activity
+
+
                     gatt.close();
                 } else {
                     // We're CONNECTING or DISCONNECTING, ignore for now
                 }
             } else {
                 // An error happened...figure out what happened!
+
+                // Probably should change back to connection activity
                 gatt.close();
             }
         }
@@ -51,6 +72,8 @@ public class Act2 extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_act2);
 
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
 
         // Receive the extra
         Intent intent = getIntent();
@@ -65,6 +88,8 @@ public class Act2 extends AppCompatActivity {
 
         et_Phone = (EditText) findViewById(R.id.et_Phone);
         btn_Phone = (Button) findViewById(R.id.btn_Phone);
+        et_Dest = (EditText) findViewById(R.id.et_Dest);
+        btn_goMaps = (Button) findViewById(R.id.btn_goMaps);
 
         btn_Phone.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
@@ -80,6 +105,11 @@ public class Act2 extends AppCompatActivity {
         });
 
 
+        btn_goMaps.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v){
+                getResponse(v);
+            }
+        });
 
 
     }
@@ -92,7 +122,50 @@ public class Act2 extends AppCompatActivity {
         return number.getBytes(StandardCharsets.UTF_8);
     }
 
+    public void getResponse(View view){
+        String starting = "Reitz";
+        String destination = "SWRC";
+        String requestStart = "https://maps.googleapis.com/maps/api/directions/json?origin=";
+        String requestMid = "&destination=";
+        String requestEnd = "&key=";
+        String request = requestStart + starting + requestMid + destination + requestEnd + MAPS_API_KEY;
 
+        //Snackbar.make(view, request, Snackbar.LENGTH_LONG).show();
+        URL url;
+        HttpURLConnection urlConnection = null;
+
+        try {
+            url = new URL(request);
+
+            urlConnection = (HttpURLConnection) url.openConnection();
+
+            Log.d("connect", "openconnect success");
+
+            //urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("GET");
+
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(
+                            urlConnection.getInputStream()
+                    )
+            );
+
+            Log.d("connect", "BufferedReader in made successfully");
+
+            String inpLine;
+
+            while ((inpLine = in.readLine()) != null) {
+                Log.d("ME", inpLine);
+            }
+            in.close();
+
+        } catch (Exception e){
+            e.printStackTrace();
+        } finally {
+            if(urlConnection != null) urlConnection.disconnect();
+        }
+
+    }
 
 
 

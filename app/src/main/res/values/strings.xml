@@ -5,4 +5,5 @@
     <string name="ble_not_supported">BLE Not Supported on This Device</string>
     <string name="ble_off">Bluetooth Not Currently On!</string>
     <string name="ble_denied">BLE Denied Operation</string>
+
 </resources>

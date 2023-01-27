@@ -32,7 +32,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.UUID;
-
+// GITHUB WORKING PROJECT
 public class MainActivity extends AppCompatActivity {
     //Device container for display
     private ArrayList<BluetoothDevice> leDevices = new ArrayList<BluetoothDevice>();
