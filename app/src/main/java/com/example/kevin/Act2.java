@@ -98,11 +98,11 @@ public class Act2 extends AppCompatActivity {
 
 
 
-
-        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        BluetoothDevice device = bluetoothAdapter.getRemoteDevice(dev_addr);
-        BluetoothGatt ble_gatt = device.connectGatt(Act2.this, false, bluetoothGattCallback, BluetoothDevice.TRANSPORT_LE);
-
+        if(!dev_addr.equals("skip")) {
+            BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            BluetoothDevice device = bluetoothAdapter.getRemoteDevice(dev_addr);
+            BluetoothGatt ble_gatt = device.connectGatt(Act2.this, false, bluetoothGattCallback, BluetoothDevice.TRANSPORT_LE);
+        }
 
         FLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -137,6 +137,10 @@ public class Act2 extends AppCompatActivity {
                 String dest = et_Dest.getText().toString();
                 String response = getResponse(v, origin_Coords, dest);
                 Log.d("connect", response);
+
+                Intent intent = new Intent(Act2.this, MapsActivity.class);
+                intent.putExtra("API_RESP", response);
+                startActivity(intent);
             }
         });
 
@@ -156,7 +160,7 @@ public class Act2 extends AppCompatActivity {
         String destination = dest;
         String requestStart = "https://maps.googleapis.com/maps/api/directions/json?origin=";
         String requestMid = "&destination=";
-        String requestEnd = "&key=";
+        String requestEnd = "&mode=bicycling&key=";
         String request = requestStart + starting + requestMid + destination + requestEnd + MAPS_API_KEY;
 
         //Snackbar.make(view, request, Snackbar.LENGTH_LONG).show();

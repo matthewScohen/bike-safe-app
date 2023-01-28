@@ -154,9 +154,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-
-
-
         // Scan button
         Button btnScan = findViewById(R.id.btn_scan);
         btnScan.setOnClickListener(new View.OnClickListener() {
@@ -241,5 +238,10 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void skipBtn(View view){
+        Intent intent = new Intent(MainActivity.this, Act2.class);
+        intent.putExtra("DEV_ADDR", "skip");
+        startActivity(intent);
+    }
 
 }
