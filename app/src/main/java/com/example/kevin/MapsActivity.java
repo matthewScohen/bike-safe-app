@@ -1,12 +1,25 @@
 package com.example.kevin;
 
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
+import android.os.Looper;
+import android.util.Log;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
@@ -27,6 +40,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
     String response;
+    FusedLocationProviderClient fusedLocationProviderClient;
+    LocationRequest locationRequest;
+    LocationCallback locationCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +58,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         Intent intent = getIntent();
         response = intent.getStringExtra("API_RESP");
+
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        locationRequest = new LocationRequest.Builder(102, 1000).setMinUpdateDistanceMeters(5).build();
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult == null) {
+                    return;
+                }
+                for (Location location : locationResult.getLocations()) {
+                    //TODO:
+                    // Update UI with location data
+                    // here check to see if
+                            //on the right path
+                            //close to right/left turn
+                    Log.d("LOCATION UPDATE:", "NEW LOCATION" + location.toString());
+
+                }
+            }
+        };
+        startLocationUpdates();
+    }
+
+    private void startLocationUpdates() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
     }
 
     /**
@@ -55,6 +99,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
+
+        //TODO: get current user location constantly
+
         mMap = googleMap;
         JSONObject json;
         JSONArray routes;
@@ -68,12 +115,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             overview = routes.getJSONObject(0).getJSONObject("overview_polyline");
             points = overview.getString("points");
             ne = new LatLng(Double.parseDouble(routes.getJSONObject(0).getJSONObject("bounds").getJSONObject("northeast").getString("lat")),
-                            Double.parseDouble(routes.getJSONObject(0).getJSONObject("bounds").getJSONObject("northeast").getString("lng")));
+                    Double.parseDouble(routes.getJSONObject(0).getJSONObject("bounds").getJSONObject("northeast").getString("lng")));
             sw = new LatLng(Double.parseDouble(routes.getJSONObject(0).getJSONObject("bounds").getJSONObject("southwest").getString("lat")),
-                            Double.parseDouble(routes.getJSONObject(0).getJSONObject("bounds").getJSONObject("southwest").getString("lng")));
+                    Double.parseDouble(routes.getJSONObject(0).getJSONObject("bounds").getJSONObject("southwest").getString("lng")));
             destination = new LatLng(Double.parseDouble(routes.getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONObject("end_location").getString("lat")),
-                                     Double.parseDouble(routes.getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONObject("end_location").getString("lng")));
-        } catch (Exception e){
+                    Double.parseDouble(routes.getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONObject("end_location").getString("lng")));
+        } catch (Exception e) {
             e.printStackTrace();
             return;
         }
@@ -86,19 +133,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         line.setColor(0xff0082ff);
         mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(new LatLngBounds(sw, ne), 100));
         mMap.addMarker(new MarkerOptions().position(destination));
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        mMap.setMyLocationEnabled(true);
     }
 
-    //taken from @'Vikrant Shah' at https://stackoverflow.com/questions/39454857/how-to-buffer-a-polyline-in-android-or-draw-a-polygon-around-a-polyline/42664925#42664925
-    private List<LatLng> decodePoly(String encoded) {
+    //decode function from @'Mushahid Khatri' at https://stackoverflow.com/questions/39454857/how-to-buffer-a-polyline-in-android-or-draw-a-polygon-around-a-polyline/42664925#42664925
+    //based on the encoding found at https://developers.google.com/maps/documentation/utilities/polylinealgorithm
+    private List<LatLng> decodePoly(String points) {
 
         List<LatLng> poly = new ArrayList<>();
-        int index = 0, len = encoded.length();
+        int index = 0, len = points.length();
         int lat = 0, lng = 0;
 
         while (index < len) {
             int b, shift = 0, result = 0;
             do {
-                b = encoded.charAt(index++) - 63;
+                b = points.charAt(index++) - 63;
                 result |= (b & 0x1f) << shift;
                 shift += 5;
             } while (b >= 0x20);
@@ -108,7 +161,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             shift = 0;
             result = 0;
             do {
-                b = encoded.charAt(index++) - 63;
+                b = points.charAt(index++) - 63;
                 result |= (b & 0x1f) << shift;
                 shift += 5;
             } while (b >= 0x20);

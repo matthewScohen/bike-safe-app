@@ -293,7 +293,7 @@ public class Act2 extends AppCompatActivity {
 
         if(checkPermissions()){
             if(isLocationEnabled()){
-                FLocationClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
+                FLocationClient.getCurrentLocation(102, null).addOnCompleteListener(new OnCompleteListener<Location>() {
                     @Override
                     public void onComplete(@NonNull Task<Location> task) {
                         Location loc = task.getResult();
