@@ -117,6 +117,17 @@ public class Act2 extends AppCompatActivity {
 
         btn_Phone.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
+
+                if(!validPhone()){
+                    Snackbar.make(v, "Please enter a valid phone number", Snackbar.LENGTH_LONG).show();
+                    return;
+                }
+
+                if(dev_addr.equals("skip")){
+                    Snackbar.make(v, "Please return to previous screen and connect to a bluetooth device", Snackbar.LENGTH_LONG).show();
+                    return;
+                }
+
                 byte[] message = getMessage();
                 Log.d("Phone", new String(message, StandardCharsets.UTF_8));
 
@@ -145,6 +156,37 @@ public class Act2 extends AppCompatActivity {
         });
 
 
+    }
+
+    public boolean validPhone(){
+        String number = et_Phone.getText().toString();
+        Log.d("PHONE", "starting check with number " + number);
+        Log.d("PHONE", "Length: " + number.length());
+        if(number.length() == 12){
+            Log.d("PHONE", "checking for hyphens");
+            if(!((number.charAt(3) == '.' || number.charAt(3) == '-') && (number.charAt(7) == '.' || number.charAt(7) == '-'))){
+                //wrong delimiters, return
+                return false;
+            }
+
+            Log.d("PHONE", "trying to remove hyphens");
+            // XXX-XXX-XXXX
+            //remove hyphens
+            number = number.substring(0,3) + number.substring(4,7) + number.substring(8);
+        }
+        if(number.length() == 10){
+            try{
+                long test = Long.parseLong(number);
+                if(test < 0){
+                    return false;
+                }
+            }
+            catch (Exception e){
+                return false;
+            }
+            return true;
+        }
+        return false;
     }
 
     public byte[] getMessage(){

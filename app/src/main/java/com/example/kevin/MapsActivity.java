@@ -61,6 +61,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         JSONObject overview;
         String points;
         LatLng sw, ne;
+        LatLng destination;
         try {
             json = new JSONObject(response);
             routes = json.getJSONArray("routes");
@@ -70,6 +71,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             Double.parseDouble(routes.getJSONObject(0).getJSONObject("bounds").getJSONObject("northeast").getString("lng")));
             sw = new LatLng(Double.parseDouble(routes.getJSONObject(0).getJSONObject("bounds").getJSONObject("southwest").getString("lat")),
                             Double.parseDouble(routes.getJSONObject(0).getJSONObject("bounds").getJSONObject("southwest").getString("lng")));
+            destination = new LatLng(Double.parseDouble(routes.getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONObject("end_location").getString("lat")),
+                                     Double.parseDouble(routes.getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONObject("end_location").getString("lng")));
         } catch (Exception e){
             e.printStackTrace();
             return;
@@ -82,13 +85,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         line.setWidth(15);
         line.setColor(0xff0082ff);
         mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(new LatLngBounds(sw, ne), 100));
-//        mMap.setLatLngBoundsForCameraTarget(new LatLngBounds(sw, ne));
-
-
-        // Add a marker in Sydney and move the camera
-//        LatLng sydney = new LatLng(-34, 151);
-//        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-//        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        mMap.addMarker(new MarkerOptions().position(destination));
     }
 
     //taken from @'Vikrant Shah' at https://stackoverflow.com/questions/39454857/how-to-buffer-a-polyline-in-android-or-draw-a-polygon-around-a-polyline/42664925#42664925
