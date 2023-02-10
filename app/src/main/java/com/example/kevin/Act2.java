@@ -15,12 +15,15 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothProfile;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.StrictMode;
 import android.provider.Settings;
 import android.util.Log;
@@ -46,39 +49,13 @@ import java.util.UUID;
 
 
 public class Act2 extends AppCompatActivity {
-
+    BLEForegroundService mService;
+    boolean mBound = false;
     EditText et_Phone;
     Button btn_Phone;
     EditText et_Dest;
     Button btn_goMaps;
-    private BluetoothGatt ble_gatt = null;
-    private final BluetoothGattCallback bluetoothGattCallback = new BluetoothGattCallback() {
-        @Override
-        public void onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState) {
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                if (newState == BluetoothProfile.STATE_CONNECTED) {
-                    // We successfully connected, proceed with service discovery
-                    Log.d("bike_safe_only", "device connected");
-                    gatt.discoverServices();
-                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                    // We successfully disconnected on our own request
 
-
-                    // Probably should change back to connection activity
-
-
-                    gatt.close();
-                } else {
-                    // We're CONNECTING or DISCONNECTING, ignore for now
-                }
-            } else {
-                // An error happened...figure out what happened!
-
-                // Probably should change back to connection activity
-                gatt.close();
-            }
-        }
-    };
     int PERMISSION_ID = 44;
     String origin_Coords = "29.6465, -82.3479";
     FusedLocationProviderClient FLocationClient;
@@ -88,32 +65,34 @@ public class Act2 extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_act2);
-
+        et_Phone = (EditText) findViewById(R.id.et_Phone);
+        btn_Phone = (Button) findViewById(R.id.btn_Phone);
+        et_Dest = (EditText) findViewById(R.id.et_Dest);
+        btn_goMaps = (Button) findViewById(R.id.btn_goMaps);
+        FLocationClient = LocationServices.getFusedLocationProviderClient(this);
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
-
         // Receive the extra
         Intent intent = getIntent();
         String dev_addr = intent.getStringExtra("DEV_ADDR");
 
+        //Bind to the service, which the prior activity
+        // started before transitioning here
+
+        Intent intentbind = new Intent(this, BLEForegroundService.class);
+        intentbind.putExtra("inNav", false);
+        bindService(intentbind, connection, Context.BIND_AUTO_CREATE);
 
 
-        if(!dev_addr.equals("skip")) {
-            BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-            BluetoothDevice device = bluetoothAdapter.getRemoteDevice(dev_addr);
-            BluetoothGatt ble_gatt = device.connectGatt(Act2.this, false, bluetoothGattCallback, BluetoothDevice.TRANSPORT_LE);
-        }
-
-        FLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
 
         String origin = getUserLocation();
 
 
-        et_Phone = (EditText) findViewById(R.id.et_Phone);
-        btn_Phone = (Button) findViewById(R.id.btn_Phone);
-        et_Dest = (EditText) findViewById(R.id.et_Dest);
-        btn_goMaps = (Button) findViewById(R.id.btn_goMaps);
+
+
+
+
 
         btn_Phone.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
@@ -131,11 +110,14 @@ public class Act2 extends AppCompatActivity {
                 byte[] message = getMessage();
                 Log.d("Phone", new String(message, StandardCharsets.UTF_8));
 
-                UUID UART_UUID = ble_gatt.getServices().get(2).getUuid();
-                BluetoothGattCharacteristic RX_CHAR = ble_gatt.getServices().get(2).getCharacteristics().get(1);
-                RX_CHAR.setValue(message);
-                RX_CHAR.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
-                ble_gatt.writeCharacteristic(RX_CHAR);
+
+                // Call service function to send phone number
+                // Make sure service is started and THEN bound to so
+                // the service outlives the activity
+                if(mBound){
+                    mService.writeMessage(message);
+                }
+
             }
         });
 
@@ -157,6 +139,27 @@ public class Act2 extends AppCompatActivity {
 
 
     }
+
+    @Override
+    protected void onStop(){
+        super.onStop();
+        unbindService(connection);
+        mBound = false;
+    }
+
+    private ServiceConnection connection = new ServiceConnection(){
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service){
+            BLEForegroundService.LocalBinder binder = (BLEForegroundService.LocalBinder) service;
+            mService = binder.getService();
+            mBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0){
+            mBound = false;
+        }
+    };
 
     public boolean validPhone(){
         String number = et_Phone.getText().toString();

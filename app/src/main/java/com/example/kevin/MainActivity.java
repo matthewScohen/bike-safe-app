@@ -17,6 +17,7 @@ import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -212,8 +213,14 @@ public class MainActivity extends AppCompatActivity {
 
                             //BluetoothGatt gatt = device.connectGatt(MainActivity.this, false, bluetoothGattCallback, BluetoothDevice.TRANSPORT_LE);
 
+                            // Start service and then start activity 2
                             Intent intent = new Intent(MainActivity.this, Act2.class);
                             intent.putExtra("DEV_ADDR", currAddress);
+
+                            Context context = getApplicationContext();
+                            Intent intentserv = new Intent(MainActivity.this, BLEForegroundService.class);
+                            intentserv.putExtra("DEV_ADDR", currAddress);
+                            context.startForegroundService(intentserv);
                             startActivity(intent);
                         }
                     });
