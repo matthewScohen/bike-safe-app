@@ -11,6 +11,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
+import android.util.Pair;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -33,7 +34,10 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Queue;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -43,6 +47,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     FusedLocationProviderClient fusedLocationProviderClient;
     LocationRequest locationRequest;
     LocationCallback locationCallback;
+    LinkedList<Pair<LatLng, String>> stepsFIFO = new LinkedList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,16 +74,49 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
                 for (Location location : locationResult.getLocations()) {
                     //TODO:
-                    // Update UI with location data
-                    // here check to see if
-                            //on the right path
-                            //close to right/left turn
-                    Log.d("LOCATION UPDATE:", "NEW LOCATION" + location.toString());
+                    // see if close to right/left turn
+                    // see if on the right path (not for beta build)
+//                    Log.d("LOCATION UPDATE:", "NEW LOCATION" + location.toString());
 
+                    if(isWithinRange(new LatLng(location.getLatitude(), location.getLongitude()), 10)){
+                        //if within 10 meters
+                        stepsFIFO.removeFirst();
+                        if(stepsFIFO.isEmpty()){
+                            //send both motors command
+                        }
+                        else{
+                            String maneuver = stepsFIFO.get(0).second;
+                            Log.d("TURN COMMAND: ", maneuver);
+                            switch(maneuver) {
+                                case "turn-right":
+                                    //send left motor command
+                                    break;
+                                case "turn-left":
+                                    //send right motor command
+                                    break;
+                                case "turn-slight-left":
+                                    //send slight-left motor command
+                                    break;
+                                case "turn-slight-right":
+                                    //send slight-right motor command
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                    }
                 }
             }
         };
         startLocationUpdates();
+    }
+
+    public boolean isWithinRange(LatLng coords, double range){
+        LatLng turn = stepsFIFO.get(0).first;
+
+//        double distance = 6371000 * Math.acos(Math.sin(coords.latitude)*Math.sin(turn.latitude) + Math.cos(coords.latitude)*Math.cos(turn.latitude)*Math.cos(coords.longitude - turn.longitude));
+        double distance = 111139 * Math.sqrt(Math.pow((turn.latitude - coords.latitude), 2) + Math.pow((turn.longitude - coords.longitude), 2));
+        return distance <= range;
     }
 
     private void startLocationUpdates() {
@@ -99,9 +137,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
-
-        //TODO: get current user location constantly
-
         mMap = googleMap;
         JSONObject json;
         JSONArray routes;
@@ -109,6 +144,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         String points;
         LatLng sw, ne;
         LatLng destination;
+        JSONArray steps;
+
         try {
             json = new JSONObject(response);
             routes = json.getJSONArray("routes");
@@ -120,6 +157,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     Double.parseDouble(routes.getJSONObject(0).getJSONObject("bounds").getJSONObject("southwest").getString("lng")));
             destination = new LatLng(Double.parseDouble(routes.getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONObject("end_location").getString("lat")),
                     Double.parseDouble(routes.getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONObject("end_location").getString("lng")));
+            steps = routes.getJSONObject(0).getJSONArray("legs").getJSONObject(0).getJSONArray("steps");
+            getQ(steps);
+
         } catch (Exception e) {
             e.printStackTrace();
             return;
@@ -138,6 +178,36 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
         mMap.setMyLocationEnabled(true);
+    }
+
+    private void getQ(JSONArray steps){
+        //init stepsQ
+
+        JSONObject tempStep;
+        LatLng tempLatLng;
+        String tempManeuver = "";
+        try {
+            for (int i = 0; i < steps.length(); i++) {
+                //get ith item
+                tempStep = steps.getJSONObject(i);
+
+                //get lat/lng of step->end_location->lat/lng
+                tempLatLng = new LatLng(Double.parseDouble(tempStep.getJSONObject("end_location").getString("lat")), Double.parseDouble(tempStep.getJSONObject("end_location").getString("lng")));
+
+                //get maneuver of step->maneuver
+                if(tempStep.has("maneuver")) {
+                    tempManeuver = tempStep.getString("maneuver");
+                }
+                else{
+                    tempManeuver = "none";
+                }
+                //add pair to queue
+                stepsFIFO.add(new Pair(tempLatLng, tempManeuver));
+            }
+        } catch(Exception e){
+            e.printStackTrace();
+            return;
+        }
     }
 
     //decode function from @'Mushahid Khatri' at https://stackoverflow.com/questions/39454857/how-to-buffer-a-polyline-in-android-or-draw-a-polygon-around-a-polyline/42664925#42664925

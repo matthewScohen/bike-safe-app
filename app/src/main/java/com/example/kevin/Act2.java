@@ -79,9 +79,11 @@ public class Act2 extends AppCompatActivity {
         //Bind to the service, which the prior activity
         // started before transitioning here
 
-        Intent intentbind = new Intent(this, BLEForegroundService.class);
-        intentbind.putExtra("inNav", false);
-        bindService(intentbind, connection, Context.BIND_AUTO_CREATE);
+        if(!dev_addr.equals("skip")) {
+            Intent intentbind = new Intent(this, BLEForegroundService.class);
+            intentbind.putExtra("inNav", false);
+            bindService(intentbind, connection, Context.BIND_AUTO_CREATE);
+        }
 
 
 
@@ -143,7 +145,7 @@ public class Act2 extends AppCompatActivity {
     @Override
     protected void onStop(){
         super.onStop();
-        unbindService(connection);
+        unbindService(connection);  //To test without BT connection, comment this out
         mBound = false;
     }
 
@@ -296,7 +298,7 @@ public class Act2 extends AppCompatActivity {
 
         if(checkPermissions()){
             if(isLocationEnabled()){
-                FLocationClient.getCurrentLocation(102, null).addOnCompleteListener(new OnCompleteListener<Location>() {
+                FLocationClient.getCurrentLocation(100, null).addOnCompleteListener(new OnCompleteListener<Location>() {
                     @Override
                     public void onComplete(@NonNull Task<Location> task) {
                         Location loc = task.getResult();
