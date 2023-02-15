@@ -120,6 +120,7 @@ public class BLEForegroundService extends Service {
                         .setContentTitle(getText(R.string.notif_title))
                         .setContentText(notif_message)
                         .setContentIntent(pendingIntent)
+                        .setSmallIcon(R.mipmap.ic_launcher_foreground)
                         .build();
 
         startForeground(ONGOING_NOTIF_ID, notification);

@@ -4,6 +4,7 @@ import static com.example.kevin.BuildConfig.MAPS_API_KEY;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityCompat;
 
@@ -30,6 +31,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -55,6 +57,7 @@ public class Act2 extends AppCompatActivity {
     Button btn_Phone;
     EditText et_Dest;
     Button btn_goMaps;
+    String dev_addr;
 
     int PERMISSION_ID = 44;
     String origin_Coords = "29.6465, -82.3479";
@@ -74,7 +77,7 @@ public class Act2 extends AppCompatActivity {
         StrictMode.setThreadPolicy(policy);
         // Receive the extra
         Intent intent = getIntent();
-        String dev_addr = intent.getStringExtra("DEV_ADDR");
+        dev_addr = intent.getStringExtra("DEV_ADDR");
 
         //Bind to the service, which the prior activity
         // started before transitioning here
@@ -133,9 +136,14 @@ public class Act2 extends AppCompatActivity {
                 String response = getResponse(v, origin_Coords, dest);
                 Log.d("connect", response);
 
-                Intent intent = new Intent(Act2.this, MapsActivity.class);
-                intent.putExtra("API_RESP", response);
-                startActivity(intent);
+                if(!dev_addr.equals("skip")) {
+                    Intent intent = new Intent(Act2.this, MapsActivity.class);
+                    intent.putExtra("API_RESP", response);
+                    startActivity(intent);
+                }
+                else {
+                    Snackbar.make(findViewById(R.id.constrlay), "Connect to a BikeSafe device before starting navigation!", Snackbar.LENGTH_LONG).show();
+                }
             }
         });
 
@@ -145,7 +153,7 @@ public class Act2 extends AppCompatActivity {
     @Override
     protected void onStop(){
         super.onStop();
-        unbindService(connection);  //To test without BT connection, comment this out
+        if(!dev_addr.equals("skip")) unbindService(connection);
         mBound = false;
     }
 

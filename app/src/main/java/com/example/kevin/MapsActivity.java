@@ -5,10 +5,14 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
 import android.util.Pair;
@@ -40,7 +44,8 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
-
+    BLEForegroundService mService;
+    boolean mBound = false;
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
     String response;
@@ -55,6 +60,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+
+        // Bind to BLE service
+            // Can never arrive at this activity unless the service is started, so doing
+            // this in onCreate without a check is fine
+        Intent intentbind = new Intent(this, BLEForegroundService.class);
+        intentbind.putExtra("inNav", true);
+        bindService(intentbind, connection, Context.BIND_AUTO_CREATE);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -244,4 +257,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         return poly;
     }
+
+    private ServiceConnection connection = new ServiceConnection(){
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service){
+            BLEForegroundService.LocalBinder binder = (BLEForegroundService.LocalBinder) service;
+            mService = binder.getService();
+            mBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0){
+            mBound = false;
+        }
+    };
 }
