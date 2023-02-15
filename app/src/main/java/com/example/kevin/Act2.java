@@ -168,6 +168,10 @@ public class Act2 extends AppCompatActivity {
         @Override
         public void onServiceDisconnected(ComponentName arg0){
             mBound = false;
+            // Go back to connection screen, tell user they've been disconnected
+            Intent intent = new Intent(Act2.this, MainActivity.class);
+            intent.putExtra("dc_from_BLE", "DISCONNECTED");
+            startActivity(intent);
         }
     };
 

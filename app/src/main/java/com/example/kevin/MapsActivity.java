@@ -37,6 +37,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -53,6 +54,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     LocationRequest locationRequest;
     LocationCallback locationCallback;
     LinkedList<Pair<LatLng, String>> stepsFIFO = new LinkedList<>();
+    byte[] slightLeft = "0255550000".getBytes(StandardCharsets.UTF_8);
+    byte[] slightRight = "0255551111".getBytes(StandardCharsets.UTF_8);
+    byte[] right = "0505551111".getBytes(StandardCharsets.UTF_8);
+    byte[] left = "0505550000".getBytes(StandardCharsets.UTF_8);
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,22 +102,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         stepsFIFO.removeFirst();
                         if(stepsFIFO.isEmpty()){
                             //send both motors command
+                            mService.writeMessage(left);
+                            mService.writeMessage(right);
                         }
                         else{
                             String maneuver = stepsFIFO.get(0).second;
                             Log.d("TURN COMMAND: ", maneuver);
                             switch(maneuver) {
                                 case "turn-right":
-                                    //send left motor command
+                                    //send right motor command
+                                    mService.writeMessage(right);
                                     break;
                                 case "turn-left":
-                                    //send right motor command
+                                    //send left motor command
+                                    mService.writeMessage(left);
                                     break;
                                 case "turn-slight-left":
                                     //send slight-left motor command
+                                    mService.writeMessage(slightLeft);
                                     break;
                                 case "turn-slight-right":
                                     //send slight-right motor command
+                                    mService.writeMessage(slightRight);
                                     break;
                                 default:
                                     break;
@@ -122,6 +134,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         };
         startLocationUpdates();
+    }
+
+    @Override
+    protected void onStop(){
+        super.onStop();
     }
 
     public boolean isWithinRange(LatLng coords, double range){
@@ -269,6 +286,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         @Override
         public void onServiceDisconnected(ComponentName arg0){
             mBound = false;
+            // Go back to connection screen, tell user they've been disconnected
+            Intent intent = new Intent(MapsActivity.this, MainActivity.class);
+            intent.putExtra("dc_from_BLE", "DISCONNECTED");
+            startActivity(intent);
         }
     };
 }

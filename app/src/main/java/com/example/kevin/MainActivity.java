@@ -31,6 +31,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.snackbar.Snackbar;
+
 import java.util.ArrayList;
 import java.util.UUID;
 // GITHUB WORKING PROJECT
@@ -243,6 +245,14 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+    }
+
+    @Override
+    protected void onStart(){
+        super.onStart();
+        Intent intent = this.getIntent();
+        String dc = intent.getStringExtra("dc_from_BLE");
+        if(dc == "DISCONNECTED") Snackbar.make(findViewById(R.id.constrlay), "You've been disconnected from your BikeSafe device", Snackbar.LENGTH_LONG).show();
     }
 
     public void skipBtn(View view){
