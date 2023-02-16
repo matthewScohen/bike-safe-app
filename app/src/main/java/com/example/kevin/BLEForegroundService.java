@@ -28,6 +28,7 @@ public class BLEForegroundService extends Service {
     private boolean inNav = false;
     private BluetoothGatt ble_gatt = null;
     private int ONGOING_NOTIF_ID = 1;
+    private boolean isDisconnected; // = false;
     private final BluetoothGattCallback bluetoothGattCallback = new BluetoothGattCallback() {
         @SuppressLint("MissingPermission")
         @Override
@@ -42,7 +43,7 @@ public class BLEForegroundService extends Service {
 
 
                     // Probably should change back to connection activity
-
+                    isDisconnected = true;
 
                     gatt.close();
                 } else {
@@ -83,6 +84,7 @@ public class BLEForegroundService extends Service {
             BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
             BluetoothDevice device = bluetoothAdapter.getRemoteDevice(dev_addr);
             ble_gatt = device.connectGatt(BLEForegroundService.this, false, bluetoothGattCallback, BluetoothDevice.TRANSPORT_LE);
+            isDisconnected = false;
         }
 
 
@@ -154,5 +156,13 @@ public class BLEForegroundService extends Service {
         RX_CHAR.setValue(message);
         RX_CHAR.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
         ble_gatt.writeCharacteristic(RX_CHAR);
+    }
+
+    public boolean isDisconnected(){
+        return isDisconnected;
+    }
+
+    public void stopService(){
+        if(isDisconnected) this.stopSelf();
     }
 }

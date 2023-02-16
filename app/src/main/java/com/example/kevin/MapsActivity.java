@@ -58,7 +58,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     byte[] slightRight = "0255551111".getBytes(StandardCharsets.UTF_8);
     byte[] right = "0505551111".getBytes(StandardCharsets.UTF_8);
     byte[] left = "0505550000".getBytes(StandardCharsets.UTF_8);
+    byte[] offLeft = "0005550000".getBytes(StandardCharsets.UTF_8);
+    byte[] offRight = "0005551111".getBytes(StandardCharsets.UTF_8);
 
+    boolean wasLeft;
+    boolean wasRight;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,19 +88,50 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         response = intent.getStringExtra("API_RESP");
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-        locationRequest = new LocationRequest.Builder(102, 1000).setMinUpdateDistanceMeters(5).build();
+        // Tinker with numbers to see how long vibration goes for
+        // Consider sleeping on vibration in code.py to then send vibration with 0 strength. handle on hardware side
+        locationRequest = new LocationRequest.Builder(102, 500).setMinUpdateDistanceMeters(2).build();
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
+
+                if(mService.isDisconnected()){
+
+                    mService.stopService();
+                    unbindService(connection);
+
+                    // Once stopped, on serviceDisconnected should be
+                    // called, which will return user to mainactivity
+                }
+
+
                 if (locationResult == null) {
                     return;
                 }
+
+
+                // After for loop, turn off motor if not near a location within location list
+                // When not within range but still navigating, turn off motors
+                if(wasRight){
+                    mService.writeMessage(offRight);
+                    wasRight = false;
+                }
+                else if(wasLeft){
+                    mService.writeMessage(offLeft);
+                    wasLeft = false;
+                }
+
+
                 for (Location location : locationResult.getLocations()) {
                     //TODO:
                     // see if close to right/left turn
                     // see if on the right path (not for beta build)
 //                    Log.d("LOCATION UPDATE:", "NEW LOCATION" + location.toString());
 
+
+                    // Get range (distance) from turn coordinates
+                    // If pastRange > 10m and currRange < 10m , vibrate for x seconds
+                    // Otherwise don't vibrate, still in the midst of turn
                     if(isWithinRange(new LatLng(location.getLatitude(), location.getLongitude()), 10)){
                         //if within 10 meters
                         stepsFIFO.removeFirst();
@@ -112,17 +147,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 case "turn-right":
                                     //send right motor command
                                     mService.writeMessage(right);
+                                    wasRight = true;
                                     break;
                                 case "turn-left":
                                     //send left motor command
                                     mService.writeMessage(left);
+                                    wasLeft = true;
                                     break;
                                 case "turn-slight-left":
                                     //send slight-left motor command
+                                    wasLeft = true;
                                     mService.writeMessage(slightLeft);
                                     break;
                                 case "turn-slight-right":
                                     //send slight-right motor command
+                                    wasRight = true;
                                     mService.writeMessage(slightRight);
                                     break;
                                 default:
@@ -130,7 +169,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             }
                         }
                     }
+
+
                 }
+
             }
         };
         startLocationUpdates();
