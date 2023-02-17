@@ -152,6 +152,7 @@ public class Act2 extends AppCompatActivity {
 
     protected void sendSMS() {
         Log.d("Send SMS", "");
+        /*
         Intent smsIntent = new Intent(Intent.ACTION_VIEW);
 
         smsIntent.setData(Uri.parse("smsto:"));
@@ -167,6 +168,21 @@ public class Act2 extends AppCompatActivity {
             Toast.makeText(Act2.this,
                     "SMS faild, please try again later.", Toast.LENGTH_SHORT).show();
         }
+
+         */
+
+        // If we want the user to open their own messages app
+
+            // I think this is the only option? Seems fine to me
+
+
+        Uri uri = Uri.parse("smsto:4079248680");
+        Intent it = new Intent(Intent.ACTION_SENDTO, uri);
+        it.putExtra("sms_body", "Testing bikesafe text");
+        startActivity(it);
+
+
+
     }
 
     @Override
