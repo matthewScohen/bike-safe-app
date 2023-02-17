@@ -23,10 +23,12 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.StrictMode;
 import android.provider.Settings;
+import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -57,6 +59,7 @@ public class Act2 extends AppCompatActivity {
     Button btn_Phone;
     EditText et_Dest;
     Button btn_goMaps;
+    Button btn_sendText;
     String dev_addr;
 
     int PERMISSION_ID = 44;
@@ -72,6 +75,7 @@ public class Act2 extends AppCompatActivity {
         btn_Phone = (Button) findViewById(R.id.btn_Phone);
         et_Dest = (EditText) findViewById(R.id.et_Dest);
         btn_goMaps = (Button) findViewById(R.id.btn_goMaps);
+        btn_sendText = (Button) findViewById(R.id.btn_sendText);
         FLocationClient = LocationServices.getFusedLocationProviderClient(this);
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -88,16 +92,7 @@ public class Act2 extends AppCompatActivity {
             bindService(intentbind, connection, Context.BIND_AUTO_CREATE);
         }
 
-
-
-
         String origin = getUserLocation();
-
-
-
-
-
-
 
         btn_Phone.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
@@ -147,7 +142,31 @@ public class Act2 extends AppCompatActivity {
             }
         });
 
+        btn_sendText.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v){
+                sendSMS();
+            }
+        });
 
+    }
+
+    protected void sendSMS() {
+        Log.d("Send SMS", "");
+        Intent smsIntent = new Intent(Intent.ACTION_VIEW);
+
+        smsIntent.setData(Uri.parse("smsto:"));
+        smsIntent.setType("vnd.android-dir/mms-sms");
+        smsIntent.putExtra("address"  , new String ("4079248680"));
+        smsIntent.putExtra("sms_body"  , "Find my bike");
+
+        try {
+            startActivity(smsIntent);
+            finish();
+            Log.d("Finished sending SMS...", "");
+        } catch (android.content.ActivityNotFoundException ex) {
+            Toast.makeText(Act2.this,
+                    "SMS faild, please try again later.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
