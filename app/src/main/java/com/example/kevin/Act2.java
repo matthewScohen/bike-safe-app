@@ -57,6 +57,7 @@ public class Act2 extends AppCompatActivity {
     boolean mBound = false;
     EditText et_Phone;
     Button btn_Phone;
+    Button btn_LockMode;
     EditText et_Dest;
     Button btn_goMaps;
     Button btn_sendText;
@@ -76,6 +77,7 @@ public class Act2 extends AppCompatActivity {
         et_Dest = (EditText) findViewById(R.id.et_Dest);
         btn_goMaps = (Button) findViewById(R.id.btn_goMaps);
         btn_sendText = (Button) findViewById(R.id.btn_sendText);
+        btn_LockMode = (Button) findViewById(R.id.btn_LockMode);
         FLocationClient = LocationServices.getFusedLocationProviderClient(this);
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -147,6 +149,21 @@ public class Act2 extends AppCompatActivity {
                 sendSMS();
             }
         });
+
+        btn_LockMode.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v){
+                if(dev_addr.equals("skip")){
+                    Snackbar.make(findViewById(R.id.constrlay), "Connect to a BikeSafe device before setting Lock Mode!", Snackbar.LENGTH_LONG).show();
+                    return;
+                }
+
+                // Write message with certain format to set lock mode in circuit python code
+                // byte[] message = ;
+                // mService.writeMessage(message);
+            }
+        });
+
+
 
     }
 

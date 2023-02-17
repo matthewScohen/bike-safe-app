@@ -2,10 +2,10 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/constrlay"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Act2"
-    android:id="@+id/constrlay">
+    tools:context=".Act2">
 
     <Button
         android:id="@+id/btn_sendText"
@@ -15,11 +15,10 @@
         android:text="Find My Bike"
         android:textAppearance="@style/TextAppearance.AppCompat.Body2"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintEnd_toStartOf="@+id/btn_LockMode"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.887" />
+        app:layout_constraintTop_toBottomOf="@+id/btn_goMaps" />
 
     <EditText
         android:id="@+id/et_Dest"
@@ -88,5 +87,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.692" />
+
+    <Button
+        android:id="@+id/btn_LockMode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Set Lock Mode"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body2"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/btn_sendText"
+        app:layout_constraintTop_toBottomOf="@+id/btn_goMaps" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
