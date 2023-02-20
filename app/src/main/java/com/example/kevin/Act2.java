@@ -109,16 +109,18 @@ public class Act2 extends AppCompatActivity {
                     return;
                 }
 
-                byte[] message = getMessage();
-                Log.d("Phone", new String(message, StandardCharsets.UTF_8));
+//                byte[] message = getMessage();
+//                Log.d("Phone", new String(message, StandardCharsets.UTF_8));
 
 
                 // Call service function to send phone number
                 // Make sure service is started and THEN bound to so
                 // the service outlives the activity
-                if(mBound){
-                    mService.writeMessage(message);
-                }
+//                if(mBound){
+//                    mService.writeMessage(message);
+//                }
+
+                sendSMS("Set phone number");
 
             }
         });
@@ -146,7 +148,7 @@ public class Act2 extends AppCompatActivity {
 
         btn_sendText.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
-                sendSMS();
+                sendSMS("Find my bike");
             }
         });
 
@@ -167,35 +169,16 @@ public class Act2 extends AppCompatActivity {
 
     }
 
-    protected void sendSMS() {
+    protected void sendSMS(String message) {
         Log.d("Send SMS", "");
-        /*
-        Intent smsIntent = new Intent(Intent.ACTION_VIEW);
 
-        smsIntent.setData(Uri.parse("smsto:"));
-        smsIntent.setType("vnd.android-dir/mms-sms");
-        smsIntent.putExtra("address"  , new String ("4079248680"));
-        smsIntent.putExtra("sms_body"  , "Find my bike");
-
-        try {
-            startActivity(smsIntent);
-            finish();
-            Log.d("Finished sending SMS...", "");
-        } catch (android.content.ActivityNotFoundException ex) {
-            Toast.makeText(Act2.this,
-                    "SMS faild, please try again later.", Toast.LENGTH_SHORT).show();
+        if(et_Phone.toString() == null){
+            Log.d("Send SMS", "NO PHONE ADDED");
         }
 
-         */
-
-        // If we want the user to open their own messages app
-
-            // I think this is the only option? Seems fine to me
-
-
-        Uri uri = Uri.parse("smsto:4079248680");
+        Uri uri = Uri.parse("smsto:" + et_Phone.toString());
         Intent it = new Intent(Intent.ACTION_SENDTO, uri);
-        it.putExtra("sms_body", "Testing bikesafe text");
+        it.putExtra("sms_body", message);
         startActivity(it);
 
 

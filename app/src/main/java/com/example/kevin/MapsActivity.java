@@ -58,11 +58,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     byte[] slightRight = "0255551111".getBytes(StandardCharsets.UTF_8);
     byte[] right = "0505551111".getBytes(StandardCharsets.UTF_8);
     byte[] left = "0505550000".getBytes(StandardCharsets.UTF_8);
+    byte[] both = "0505551010".getBytes(StandardCharsets.UTF_8);
     byte[] offLeft = "0005550000".getBytes(StandardCharsets.UTF_8);
     byte[] offRight = "0005551111".getBytes(StandardCharsets.UTF_8);
-
-    boolean wasLeft;
-    boolean wasRight;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,26 +108,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
 
 
-                // After for loop, turn off motor if not near a location within location list
-                // When not within range but still navigating, turn off motors
-                // Functionality moved to code.py\
-                /*
-                if(wasRight){
-                    mService.writeMessage(offRight);
-                    wasRight = false;
-                }
-                else if(wasLeft){
-                    mService.writeMessage(offLeft);
-                    wasLeft = false;
-                }
-
-                 */
-
-
                 for (Location location : locationResult.getLocations()) {
-                    //TODO:
-                    // see if close to right/left turn
-                    // see if on the right path (not for beta build)
 //                    Log.d("LOCATION UPDATE:", "NEW LOCATION" + location.toString());
 
 
@@ -141,9 +120,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         stepsFIFO.removeFirst();
                         if(stepsFIFO.isEmpty()){
                             //send both motors command
-                                // CURRENTLY ONLY ONE AT A TIME WORKS
-                            mService.writeMessage(left);
-                            mService.writeMessage(right);
+                            mService.writeMessage(both);
                         }
                         else{
                             String maneuver = stepsFIFO.get(0).second;
@@ -152,21 +129,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 case "turn-right":
                                     //send right motor command
                                     mService.writeMessage(right);
-                                    wasRight = true;
                                     break;
                                 case "turn-left":
                                     //send left motor command
                                     mService.writeMessage(left);
-                                    wasLeft = true;
                                     break;
                                 case "turn-slight-left":
                                     //send slight-left motor command
-                                    wasLeft = true;
                                     mService.writeMessage(slightLeft);
                                     break;
                                 case "turn-slight-right":
                                     //send slight-right motor command
-                                    wasRight = true;
                                     mService.writeMessage(slightRight);
                                     break;
                                 default:
@@ -189,6 +162,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public boolean isWithinRange(LatLng coords, double range){
+        if(stepsFIFO.isEmpty()){
+            return false;
+        }
+
         LatLng turn = stepsFIFO.get(0).first;
 
 //        double distance = 6371000 * Math.acos(Math.sin(coords.latitude)*Math.sin(turn.latitude) + Math.cos(coords.latitude)*Math.cos(turn.latitude)*Math.cos(coords.longitude - turn.longitude));
@@ -259,6 +236,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void getQ(JSONArray steps){
         //init stepsQ
+        stepsFIFO.clear();
 
         JSONObject tempStep;
         LatLng tempLatLng;
