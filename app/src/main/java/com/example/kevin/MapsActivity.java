@@ -112,6 +112,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 // After for loop, turn off motor if not near a location within location list
                 // When not within range but still navigating, turn off motors
+                // Functionality moved to code.py\
+                /*
                 if(wasRight){
                     mService.writeMessage(offRight);
                     wasRight = false;
@@ -120,6 +122,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     mService.writeMessage(offLeft);
                     wasLeft = false;
                 }
+
+                 */
 
 
                 for (Location location : locationResult.getLocations()) {
@@ -137,6 +141,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         stepsFIFO.removeFirst();
                         if(stepsFIFO.isEmpty()){
                             //send both motors command
+                                // CURRENTLY ONLY ONE AT A TIME WORKS
                             mService.writeMessage(left);
                             mService.writeMessage(right);
                         }
