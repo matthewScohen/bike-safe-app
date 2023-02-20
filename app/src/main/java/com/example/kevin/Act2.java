@@ -172,11 +172,12 @@ public class Act2 extends AppCompatActivity {
     protected void sendSMS(String message) {
         Log.d("Send SMS", "");
 
-        if(et_Phone.toString() == null){
-            Log.d("Send SMS", "NO PHONE ADDED");
-        }
+//        if(et_Phone.toString() == null){
+//            Log.d("Send SMS", "NO PHONE ADDED");
+//        }
 
-        Uri uri = Uri.parse("smsto:" + et_Phone.toString());
+//        Uri uri = Uri.parse("smsto:" + et_Phone.toString());
+        Uri uri = Uri.parse("smsto:" + "3528702489");
         Intent it = new Intent(Intent.ACTION_SENDTO, uri);
         it.putExtra("sms_body", message);
         startActivity(it);
