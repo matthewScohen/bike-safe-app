@@ -198,7 +198,7 @@ public class MainActivity extends AppCompatActivity {
                 for(int i = 0; i < leDevices.size(); i++){
                     LinearLayout devlist = findViewById(R.id.ll_devlist);
                     Button newBtn = new Button(MainActivity.this);
-                    newBtn.setText(leDevices.get(i).getName() + " " +  leDevices.get(i).getAddress());
+                    newBtn.setText("BikeSafe Device: " +  leDevices.get(i).getAddress());
 
                     String currAddress = leDevices.get(i).getAddress();
                     newBtn.setOnClickListener(new View.OnClickListener(){

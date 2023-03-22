@@ -81,20 +81,7 @@ public class Act2 extends AppCompatActivity {
         FLocationClient = LocationServices.getFusedLocationProviderClient(this);
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
-        // Receive the extra
-        Intent intent = getIntent();
-        dev_addr = intent.getStringExtra("DEV_ADDR");
 
-        //Bind to the service, which the prior activity
-        // started before transitioning here
-
-        if(!dev_addr.equals("skip")) {
-            Intent intentbind = new Intent(this, BLEForegroundService.class);
-            intentbind.putExtra("inNav", false);
-            bindService(intentbind, connection, Context.BIND_AUTO_CREATE);
-        }
-
-        String origin = getUserLocation();
 
         btn_Phone.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
@@ -186,6 +173,23 @@ public class Act2 extends AppCompatActivity {
 
     }
 
+    @Override
+    protected void onStart(){
+        super.onStart();
+        // Receive the extra
+        Intent intent = getIntent();
+        dev_addr = intent.getStringExtra("DEV_ADDR");
+
+        //Bind to the service, which was already started by MainActivity
+        // started before transitioning here
+        if(!dev_addr.equals("skip")) {
+            Intent intentbind = new Intent(this, BLEForegroundService.class);
+            intentbind.putExtra("inNav", false);
+            bindService(intentbind, connection, Context.BIND_AUTO_CREATE);
+        }
+
+        String origin = getUserLocation();
+    }
     @Override
     protected void onStop(){
         super.onStop();
