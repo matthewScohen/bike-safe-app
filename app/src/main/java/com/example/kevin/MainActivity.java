@@ -50,7 +50,60 @@ public class MainActivity extends AppCompatActivity {
                     if(!leDevices.contains(result.getDevice())){
                         leDevices.add(result.getDevice());
                     }
-                }
+
+
+
+                    LinearLayout devlist = findViewById(R.id.ll_devlist);
+                    Button newBtn = new Button(MainActivity.this);
+                    //String dev = leDevices.get(i).getName() + " " + leDevices.get(i).getAddress();
+                    //String dev = getString(R.string.device_list_name) + leDevices.get(i).getAddress();
+
+                    newBtn.setText(result.getDevice().getName());
+                    String currAddress = result.getDevice().getAddress();
+                    newBtn.setOnClickListener(new View.OnClickListener(){
+                        public void onClick(View v){
+                            // Connect to device
+
+                            //BluetoothDevice device = bluetoothAdapter.getRemoteDevice(currAddress);
+
+                            //int deviceType = device.getType();
+
+                            //if(deviceType == BluetoothDevice.DEVICE_TYPE_UNKNOWN){
+                            //    Log.d("bike_safe_only"),
+                            //}
+
+                            //BluetoothGatt gatt = device.connectGatt(MainActivity.this, false, bluetoothGattCallback, BluetoothDevice.TRANSPORT_LE);
+
+                            // Start service and then start activity 2
+                            Intent intent = new Intent(MainActivity.this, Act2.class);
+                            intent.putExtra("DEV_ADDR", currAddress);
+
+                            Context context = getApplicationContext();
+                            Intent intentserv = new Intent(MainActivity.this, BLEForegroundService.class);
+                            intentserv.putExtra("DEV_ADDR", currAddress);
+                            context.startForegroundService(intentserv);
+                            startActivity(intent);
+                        }
+                    });
+                    // If it's a bikesafe device, and the same one isn't already displayed..
+                    if(newBtn.getText().toString().contains("CIRCUITPY")) {
+                        boolean isDuplicate = false;
+                        for (int j = 0; j < devlist.getChildCount(); j++) {
+                            Button curr = (Button)(devlist.getChildAt(j));
+                            if(curr.getText().toString().contains(result.getDevice().getAddress()))
+                                isDuplicate = true;
+                        }
+                        if(!isDuplicate){
+                            String dev = getString(R.string.device_list_name, result.getDevice().getAddress());
+                            newBtn.setText(dev);
+                            devlist.addView(newBtn);
+                        }
+
+
+                    }
+
+                    }
+
             };
 
     private BluetoothLeScanner bluetoothLeScanner;
@@ -195,51 +248,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-                for(int i = 0; i < leDevices.size(); i++){
-                    LinearLayout devlist = findViewById(R.id.ll_devlist);
-                    Button newBtn = new Button(MainActivity.this);
-                    newBtn.setText("BikeSafe Device: " +  leDevices.get(i).getAddress());
 
-                    String currAddress = leDevices.get(i).getAddress();
-                    newBtn.setOnClickListener(new View.OnClickListener(){
-                        public void onClick(View v){
-                            // Connect to device
-
-                            //BluetoothDevice device = bluetoothAdapter.getRemoteDevice(currAddress);
-
-                            //int deviceType = device.getType();
-
-                            //if(deviceType == BluetoothDevice.DEVICE_TYPE_UNKNOWN){
-                            //    Log.d("bike_safe_only"),
-                            //}
-
-                            //BluetoothGatt gatt = device.connectGatt(MainActivity.this, false, bluetoothGattCallback, BluetoothDevice.TRANSPORT_LE);
-
-                            // Start service and then start activity 2
-                            Intent intent = new Intent(MainActivity.this, Act2.class);
-                            intent.putExtra("DEV_ADDR", currAddress);
-
-                            Context context = getApplicationContext();
-                            Intent intentserv = new Intent(MainActivity.this, BLEForegroundService.class);
-                            intentserv.putExtra("DEV_ADDR", currAddress);
-                            context.startForegroundService(intentserv);
-                            startActivity(intent);
-                        }
-                    });
-                    // If it's a bikesafe device, and the same one isn't already displayed..
-                    if(newBtn.getText().toString().contains("CIRCUITPY")) {
-                        boolean isDuplicate = false;
-                        for (int j = 0; j < devlist.getChildCount(); j++) {
-                            Button curr = (Button)(devlist.getChildAt(j));
-                            if(curr.getText().toString().contains(leDevices.get(i).getAddress()))
-                                isDuplicate = true;
-                        }
-                        if(!isDuplicate)
-                            devlist.addView(newBtn);
-
-                    }
-
-                }
             }
         });
 
