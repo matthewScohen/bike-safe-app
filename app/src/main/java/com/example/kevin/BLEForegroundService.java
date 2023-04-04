@@ -20,6 +20,7 @@ import android.util.Log;
 
 import androidx.core.app.NotificationManagerCompat;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 public class BLEForegroundService extends Service {
@@ -44,6 +45,10 @@ public class BLEForegroundService extends Service {
 
                     // Probably should change back to connection activity
                     isDisconnected = true;
+
+                    stopSelf();
+
+                    //stopService();
 
                     gatt.close();
                 } else {
@@ -126,6 +131,8 @@ public class BLEForegroundService extends Service {
                         .build();
 
         startForeground(ONGOING_NOTIF_ID, notification);
+
+
         return binder;
     }
 

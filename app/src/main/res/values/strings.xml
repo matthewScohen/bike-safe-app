@@ -10,5 +10,6 @@
     <string name="notif_title">BLE Connected</string>
     <string name="notif_message_notnav">Connected to a BikeSafe Device!</string>
     <string name="notif_message_nav">Currently navigating with BikeSafe!</string>
+    <string name="device_list_name">BikeSafe Device: %s</string>
 
 </resources>

@@ -93,16 +93,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onLocationResult(LocationResult locationResult) {
 
-                if(mService.isDisconnected()){
-
-                    mService.stopService();
-                    unbindService(connection);
-
-                    // Once stopped, on serviceDisconnected should be
-                    // called, which will return user to mainactivity
-                }
-
-
                 if (locationResult == null) {
                     return;
                 }
@@ -159,6 +149,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onStop(){
         super.onStop();
+        unbindService(connection);
+        mBound = false;
+
     }
 
     public boolean isWithinRange(LatLng coords, double range){
@@ -310,7 +303,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         public void onServiceDisconnected(ComponentName arg0){
-            mBound = false;
+            //mBound = false;
             // Go back to connection screen, tell user they've been disconnected
             Intent intent = new Intent(MapsActivity.this, MainActivity.class);
             intent.putExtra("dc_from_BLE", "DISCONNECTED");

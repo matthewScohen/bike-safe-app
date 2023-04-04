@@ -55,6 +55,10 @@ import java.util.UUID;
 public class Act2 extends AppCompatActivity {
     BLEForegroundService mService;
     boolean mBound = false;
+
+
+    static final String STATE_LOCKMODE = "lockMode";
+    boolean lockMode;
     EditText et_Phone;
     Button btn_Phone;
     Button btn_LockMode;
@@ -66,6 +70,8 @@ public class Act2 extends AppCompatActivity {
     int PERMISSION_ID = 44;
     String origin_Coords = "29.6465, -82.3479";
     FusedLocationProviderClient FLocationClient;
+
+
 
 
     @Override
@@ -81,6 +87,10 @@ public class Act2 extends AppCompatActivity {
         FLocationClient = LocationServices.getFusedLocationProviderClient(this);
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
+
+
+
+
 
 
         btn_Phone.setOnClickListener(new View.OnClickListener(){
@@ -146,9 +156,10 @@ public class Act2 extends AppCompatActivity {
                     return;
                 }
 
-                // Write message with certain format to set lock mode in circuit python code
-                // byte[] message = ;
-                // mService.writeMessage(message);
+
+                byte[] message;
+                message = "0005550001".getBytes(StandardCharsets.UTF_8);
+                mService.writeMessage(message);
             }
         });
 
@@ -186,6 +197,8 @@ public class Act2 extends AppCompatActivity {
             Intent intentbind = new Intent(this, BLEForegroundService.class);
             intentbind.putExtra("inNav", false);
             bindService(intentbind, connection, Context.BIND_AUTO_CREATE);
+
+            //wait((long)500);
         }
 
         String origin = getUserLocation();
@@ -203,11 +216,12 @@ public class Act2 extends AppCompatActivity {
             BLEForegroundService.LocalBinder binder = (BLEForegroundService.LocalBinder) service;
             mService = binder.getService();
             mBound = true;
+
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0){
-            mBound = false;
+            //mBound = false;
             // Go back to connection screen, tell user they've been disconnected
             Intent intent = new Intent(Act2.this, MainActivity.class);
             intent.putExtra("dc_from_BLE", "DISCONNECTED");
